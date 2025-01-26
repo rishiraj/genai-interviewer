@@ -71,7 +71,7 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
     async def connect(self, api_key: str):
         if self.session is None:
             client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
-            config = {"response_modalities": ["AUDIO"]}
+            config = {"response_modalities": ["AUDIO"], "system_instruction": ""}
             async with client.aio.live.connect(
                 model="gemini-2.0-flash-exp", config=config
             ) as session:
