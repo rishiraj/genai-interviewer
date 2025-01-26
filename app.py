@@ -150,11 +150,16 @@ with gr.Blocks(css=css) as demo:
                 icon_button_color="rgb(35, 157, 225)",
             )
         with gr.Column():
-            image_input = gr.Image(label="Image", type="numpy", sources=["upload", "clipboard"])
-
+            about_company = gr.Textbox(label="About company", lines=3, placeholder="Enter details about the company")
+            about_role = gr.Textbox(label="About this role", lines=3, placeholder="Enter details about the role")
+            responsibilities = gr.Textbox(label="This is what you’ll be doing", lines=4, placeholder="Describe the responsibilities")
+            requirements = gr.Textbox(label="What we are looking for", lines=4, placeholder="Describe the requirements")
+            benefits = gr.Textbox(label="What we offer", lines=3, placeholder="Describe the benefits offered")
+            interview_questions = gr.Textbox(label="Interview questions", lines=4, placeholder="Provide interview questions")
+    
         webrtc.stream(
             GeminiHandler(),
-            inputs=[webrtc, api_key, image_input],
+            inputs=[webrtc, api_key, about_company, about_role, responsibilities, requirements, benefits, interview_questions],
             outputs=[webrtc],
             time_limit=90,
             concurrency_limit=2,
