@@ -61,17 +61,15 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
             if time.time() - self.last_frame_time > 1:
                 self.last_frame_time = time.time()
                 await self.session.send(encode_image(frame))
-                if self.latest_args[2] is not None:
-                    await self.session.send(encode_image(self.latest_args[2]))
         self.video_queue.put_nowait(frame)
     
     async def video_emit(self) -> VideoEmitType:
         return await self.video_queue.get()
 
-    async def connect(self, api_key: str):
+    async def connect(self, api_key: str, filled_prompt: str):
         if self.session is None:
             client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
-            config = {"response_modalities": ["AUDIO"], "system_instruction": ""}
+            config = {"response_modalities": ["AUDIO"], "system_instruction": filled_prompt}
             async with client.aio.live.connect(
                 model="gemini-2.0-flash-exp", config=config
             ) as session:
@@ -103,7 +101,7 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
         if not self.args_set.is_set():
             await self.wait_for_args()
         if self.session is None:
-            asyncio.create_task(self.connect(self.latest_args[1]))
+            asyncio.create_task(self.connect(self.latest_args[1], self.latest_args[2]))
         array = await self.audio_queue.get()
         return (self.output_sample_rate, array)
 
@@ -156,10 +154,22 @@ with gr.Blocks(css=css) as demo:
             requirements = gr.Textbox(label="What we are looking for", lines=4, placeholder="Describe the requirements")
             benefits = gr.Textbox(label="What we offer", lines=3, placeholder="Describe the benefits offered")
             interview_questions = gr.Textbox(label="Interview questions", lines=4, placeholder="Provide interview questions")
+        
+        with open("prompt.md", "r") as file:
+            template = file.read()
+
+        filled_prompt = template.format(
+            about_company=about_company,
+            about_role=about_role,
+            responsibilities=responsibilities,
+            requirements=requirements,
+            benefits=benefits,
+            interview_questions=interview_questions
+        )
     
         webrtc.stream(
             GeminiHandler(),
-            inputs=[webrtc, api_key, about_company, about_role, responsibilities, requirements, benefits, interview_questions],
+            inputs=[webrtc, api_key, filled_prompt],
             outputs=[webrtc],
             time_limit=90,
             concurrency_limit=2,
